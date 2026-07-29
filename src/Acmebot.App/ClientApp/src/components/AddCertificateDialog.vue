@@ -75,6 +75,8 @@ const form = reactive({
   tags: [] as CertificateTagInput[],
 });
 
+const customDnsAlias = ref('');
+
 const activeIssueMode = computed(() => issueModeOptions[form.issueMode]);
 const dnsNameEditorComponent = computed(() => activeIssueMode.value.editor);
 const customCertificateName = computed(() => form.certificateName.trim());
@@ -139,6 +141,7 @@ watch(
   () => {
     form.dnsNames = [];
     form.dnsProviderName = activeIssueMode.value.useSelectedZoneProvider && selectedZone.value ? selectedZone.value.dnsProviderName : '';
+    customDnsAlias.value = '';
   },
 );
 
@@ -181,6 +184,7 @@ function resetForm(): void {
   form.reuseKey = false;
   form.profile = '';
   form.tags = [];
+  customDnsAlias.value = '';
 }
 
 function validateCertificateName(certificateName: string): string {
@@ -268,7 +272,8 @@ function submit(): void {
     return;
   }
 
-  const dnsAlias = activeIssueMode.value.useGeneratedDnsAlias ? delegatedDnsAlias.value : '';
+  // Use custom alias if in delegated mode and user provided one, otherwise use auto-generated
+  const dnsAlias = customDnsAlias.value || (activeIssueMode.value.useGeneratedDnsAlias ? delegatedDnsAlias.value : '');
 
   const policy: CertificatePolicyItem = {
     dnsNames: form.dnsNames,
@@ -445,6 +450,7 @@ function submit(): void {
               :dns-provider-name="form.dnsProviderName"
               @add-dns-name="addDnsName"
               @remove-dns-name="removeDnsName"
+              @update-dns-alias="(alias) => customDnsAlias = alias"
             />
 
             <div class="form-section form-section--inline">
